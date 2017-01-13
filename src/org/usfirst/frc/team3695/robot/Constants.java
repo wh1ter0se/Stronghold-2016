@@ -11,12 +11,12 @@ public class Constants {
 	/**
 	 * Time in MS between when the latch closes and the arm piston moves downwards.
 	 */
-	public static final long TIME_TO_LATCH = 2000;
+	public static final long TIME_TO_LATCH = 500;
 	
 	/**
 	 * Time it takes for the piston to move down so the driver can fire the ball again.
 	 */
-	public static final long TIME_TO_MOVE_ARM_PISTON = 2000;
+	public static final long TIME_TO_MOVE_ARM_PISTON = 1000;
 
 	/**
 	 * Joystick control port
@@ -33,39 +33,52 @@ public class Constants {
 	/**
 	 * Port for driving motors.
 	 */
-	public static final int FRONT_LEFT_MOTOR_PORT = 0,
-							FRONT_RIGHT_MOTOR_PORT = 1,
+	public static final int FRONT_LEFT_MOTOR_PORT = 1,
+							FRONT_RIGHT_MOTOR_PORT = 5,
 							REAR_LEFT_MOTOR_PORT = 2,
-							REAR_RIGHT_MOTOR_PORT = 3,
-							BALL_MOTOR_PORT = 4;
+							REAR_RIGHT_MOTOR_PORT = 4,
+							BALL_MOTOR_PORT = 3;
 	
 	/**
-	 * Port used for the Ultrasonic Sensor.
+	 * Analog Port used for sensors.
 	 */
-	public static final int ULTRASONIC_INPUT = 0;
+	public static final int ULTRASONIC_INPUT = 3,
+							TRANSDUCER_PORT = 1,
+							PHOTO_LOADED_PORT = 2,
+							BUTTON_INPUT = 0;
 	
 	/**
-	 * Port used for Photoelelctric sensor
+	 * Ultrasonic ranges in inches.
 	 */
-	public static final int PHOTO_PICKUP_PORT = 1,
-							PHOTO_LOADED_PORT = 2;
+	public static final double MIN_RANGE = 60,
+							   IDEAL_POSITION = 66,
+							   MAX_RANGE = 72;
+	
+	/**
+	 * Scalar for Pnuematics (Converts volts to ~ PSI).
+	 * Generic linear MX + B equation.
+	 */
+	public static final double TRANSDUCER_SCALAR = 24.866,
+							   TRANSDUCER_B = 9.365;
+	
 	/**
 	 * Limit for the Photoelectric Sensor
 	 */
 	public static final double PHOTO_LIMIT = 0.7;
+	
+	/**
+	 * Limit for the buttons
+	 */
+	public static final double BUTTON_LIMIT = 0.1;
+	
 	/**
 	 * True if the motor is inverted. False otherwise.
 	 */
-	public static final boolean FRONT_LEFT_MOTOR_INVERT = true,
-								FRONT_RIGHT_MOTOR_INVERT = true,
+	public static final boolean FRONT_LEFT_MOTOR_INVERT = false,
+								FRONT_RIGHT_MOTOR_INVERT = false,
 								REAR_LEFT_MOTOR_INVERT = false,
-								REAR_RIGHT_MOTOR_INVERT = true,
+								REAR_RIGHT_MOTOR_INVERT = false,
 								BALL_MOTOR_INVERT = true;
-	
-	/**
-	 * Amount the robot has traveled per encoder pulse.
-	 */
-	public static final double DISTANCE_PER_PULSE = 0.042;
 	
 	/**
 	 * String that tells the robot which axis is down. By default, 
@@ -85,6 +98,7 @@ public class Constants {
 	 * The controller will rumble for at least this long before stopping. 
 	 */
 	public static final long RUMBLE_TIME_MS = 200;
+	
 	/**
 	 * This value defines the amount of needed g forces to activate rumble. If
 	 * the current amount of g force is higher than 1 g + RUMBLE_BOUND_G_FORCE -OR-
@@ -92,30 +106,6 @@ public class Constants {
 	 * rumble will be activated on the driver's controller.
 	 */
 	public static final float RUMBLE_BOUND_G_FORCE = 0.4f;
-	
-	/**
-	 * Camera width and height in pixels.
-	 */
-	public static final int CAMERA_WIDTH = 640,
-							CAMERA_HEIGHT = 480;
-	
-	/**
-	 * Used for camera calibration. These numbers represent the offset from the center of the
-	 * camera in pixels. The variables here are the names to use when obtaining them through
-	 * the preferences.
-	 */
-	public static final String CAMERA_CALIBRATION_LR_NAME = "Camera Calibration Left-/Right+",
-							   CAMERA_CALIBRATION_UD_NAME = "Camera Calibration Down-/Up+";
-
-	/**
-	 * Amount of time that the robot will rotate before timing out in seconds.
-	 */
-	public static final long MAX_ROTATE_TIME = 5;
-
-	/**
-	 * The amount of times code can run while the goal is out of the camera.
-	 */
-	public static final int MAX_ERRORS = 100;
 
 	/**
 	 * Solenoid ports.
@@ -126,14 +116,15 @@ public class Constants {
 							LATCH_SOLENOID_DISENGAGE = 2,
 							ARM_PISTON_SOLENOID_UP = 5,
 							ARM_PISTON_SOLENOID_DOWN = 4;
-
-	
-	public static final double NO_BOOST_MULTIPLIER = 0.8;
 	
 	/**
-	 * Ultrasonic ranges in inches.
+	 * LED PCM Ports
 	 */
-	public static final double MIN_RANGE = 60,
-				   IDEAL_POSITION = 66,
-				   MAX_RANGE = 72;
+	public static final int RED_LED_PORT = 7,
+							BLUE_LED_PORT = 6;
+	
+	/**
+	 * Multiplier used when the b button is not held.
+	 */
+	public static final double NO_BOOST_MULTIPLIER = 0.6;
 }

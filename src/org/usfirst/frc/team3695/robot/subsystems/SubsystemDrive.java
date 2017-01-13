@@ -4,12 +4,13 @@ import org.usfirst.frc.team3695.robot.Constants;
 import org.usfirst.frc.team3695.robot.Controller;
 import org.usfirst.frc.team3695.robot.Robot;
 import org.usfirst.frc.team3695.robot.commands.CommandDrive;
+import org.usfirst.frc.team3695.robot.util.Loggable;
 
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
+import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Joystick.RumbleType;
 import edu.wpi.first.wpilibj.RobotDrive;
-import edu.wpi.first.wpilibj.TalonSRX;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -17,29 +18,34 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * This subsystem controls the driving motors and drive train variables. There are also
  * some unique sensors (like the accelerometer and stuff) that are included.
  */
-public class SubsystemDrive extends Subsystem {
-	private TalonSRX frontLeft;
-	private TalonSRX frontRight;
-	private TalonSRX rearLeft;
-	private TalonSRX rearRight;
-	
-	private double[] x_g_buffer = new double[10];
-	private double[] y_g_buffer = new double[x_g_buffer.length];
-	private double[] z_g_buffer = new double[x_g_buffer.length];
-	
+public class SubsystemDrive extends Subsystem implements Loggable {
+	private CANTalon frontLeft;
+	private CANTalon frontRight;
+	private CANTalon rearLeft;
+	private CANTalon rearRight;
 	private RobotDrive driveTrain;
-	
 	private BuiltInAccelerometer builtInAccelerometer;
+	
+	/**
+	 * An array of the last ten g-force values on the
+	 * x, y, and z values of the built in accelerometer.
+	 */
+	private double[] x_g_buffer = new double[10],
+					 y_g_buffer = new double[x_g_buffer.length],
+					 z_g_buffer = new double[x_g_buffer.length];
 	
 	private long timeStartRumble = 0;
 	
+	/**
+	 * Creates the ability to drive the robot.
+	 */
 	public SubsystemDrive() {
 		super();
 		
-		frontLeft = new TalonSRX(Constants.FRONT_LEFT_MOTOR_PORT);
-		frontRight = new TalonSRX(Constants.FRONT_RIGHT_MOTOR_PORT);
-		rearLeft = new TalonSRX(Constants.REAR_LEFT_MOTOR_PORT);
-		rearRight = new TalonSRX(Constants.REAR_RIGHT_MOTOR_PORT);
+		frontLeft = new CANTalon(Constants.FRONT_LEFT_MOTOR_PORT);
+		frontRight = new CANTalon(Constants.FRONT_RIGHT_MOTOR_PORT);
+		rearLeft = new CANTalon(Constants.REAR_LEFT_MOTOR_PORT);
+		rearRight = new CANTalon(Constants.REAR_RIGHT_MOTOR_PORT);
 		driveTrain = new RobotDrive(frontLeft,rearLeft,frontRight,rearRight);
 		
 		driveTrain.setInvertedMotor(RobotDrive.MotorType.kFrontLeft, Constants.FRONT_LEFT_MOTOR_INVERT);
@@ -54,38 +60,44 @@ public class SubsystemDrive extends Subsystem {
 		setDefaultCommand(new CommandDrive());
     }
     
-	/**
-	 * Arcade style driving for the DriveTrain.
-	 * @param x Speed in range [-1,1]
-	 * @param y Speed in range [-1,1]
-	 * @param boost True if the robot should go max speed, false if the max speed should be
-	 * Constants.NO_BOOST_MULTIPLIER
-	 */
-	public void drive(double x, double y, boolean boost) {
-		driveTrain.arcadeDrive(x * (boost ? 1.0 : 0.8), y * (boost ? 1.0 : Constants.NO_BOOST_MULTIPLIER));
+    /**
+     * Drives the robot like a tank.
+     * @param left The speed of the left wheels from -1 to 1, where -1 is the max
+     * reverse speed and 1 is the max forward speed.
+     * @param right The speed of the right wheels from -1 to 1, where -1 is the max
+     * reverse speed and 1 is the max forward speed.
+     */
+	public void tankdrive(double left, double right) {
+		driveTrain.tankDrive(left,right);
 	}
 	
 	/**
-	 * Arcade style driving for the DriveTrain.
-	 * @param x Speed in range [-1,1]
-	 * @param y Speed in range [-1,1]
+	 * Uses a controller to drive the tank.
+	 * @param joy The joystick to rumple when the tank is 
+	 * being  driven.
 	 */
-	public void drive(double x, double y) {
-		driveTrain.arcadeDrive(x,y);
-	}
-	
-	/**
-	 * @param joy This should move the robot and rumble the controller.
-	 * Passing the joy to this method is simply for rumble.
-	 */
-	public void drive(Joystick joy) {
-		drive(Controller.DRIVE_X_AXIS(),Controller.DRIVE_Y_AXIS(),joy.getRawButton(Controller.DRIVE_BOOST()));
+	public void tankdrive(Joystick joy) {
+		double[] tank = Controller.DRIVE_AXIS();
+		tankdrive(tank[0],tank[1]);
 		if(Robot.isRumbleEnabled()) {
-			joy.setRumble(RumbleType.kLeftRumble, (System.currentTimeMillis() < timeStartRumble + Constants.RUMBLE_TIME_MS ? 1.0f : 0.0f));
-			joy.setRumble(RumbleType.kRightRumble, (System.currentTimeMillis() < timeStartRumble + Constants.RUMBLE_TIME_MS ? 1.0f : 0.0f));
+			if (System.currentTimeMillis() < timeStartRumble + Constants.RUMBLE_TIME_MS) {
+				joy.setRumble(RumbleType.kLeftRumble, 1.0f);
+				joy.setRumble(RumbleType.kRightRumble, 1.0f);
+				Robot.blingSubsystem.flash();
+			} else {
+				joy.setRumble(RumbleType.kLeftRumble, 0.0f);
+				joy.setRumble(RumbleType.kRightRumble, 0.0f);
+			}
 		}
 	}
 	
+	/**
+	 * Rumbles a controller when some amount of g-force is exceeded. 
+	 * See the Constants.RUMBLE_BOUND_G_FORCE for more detail.
+	 * @param x X g force.
+	 * @param y Y g force.
+	 * @param z Z g force.
+	 */
 	private void rumble(double x, double y, double z) {
 		double downGForce;
 		switch(Constants.DOWN_AXIS) {
@@ -117,9 +129,6 @@ public class SubsystemDrive extends Subsystem {
 		return sum / (double)list.length;
 	}
 
-	/**
-	 * The log method puts interesting information to the SmartDashboard.
-	 */
 	public void log() {
 		for(int i = 0; i < x_g_buffer.length - 1; i++) {
 			x_g_buffer[i] = x_g_buffer[i + 1];
